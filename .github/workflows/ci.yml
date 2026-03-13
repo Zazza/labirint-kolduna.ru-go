@@ -26,7 +26,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            /home/github/gamebook/backend/
+            cd /home/github/gamebook/backend/
             go mod download
             go build -o build main.go
             ./build
