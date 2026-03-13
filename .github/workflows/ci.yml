@@ -17,7 +17,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "."
-          target: "/srv/gamebook/backend/"
+          target: "/home/github/gamebook/backend/"
 
       - name: Execute remote ssh commands
         uses: appleboy/ssh-action@master
@@ -26,7 +26,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            /srv/gamebook/backend/
+            /home/github/gamebook/backend/
             go mod download
             go build -o build main.go
             ./build
