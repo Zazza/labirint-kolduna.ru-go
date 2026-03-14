@@ -29,4 +29,4 @@ jobs:
             cd /home/github/gamebook/backend/
             /usr/local/go/bin/go mod download
             /usr/local/go/bin/go build -o build cmd/main.go
-            ./build
+            sudo systemctl restart gamebook

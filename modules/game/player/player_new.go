@@ -41,11 +41,7 @@ func helpBonuses() []entities.PlayerBonus {
 	bonusName1 := "Счастливый камушек"
 	bonusAlias1 := "lucky_stone"
 
-	bonusName2 := "Телепорт к месту гибели"
-	bonusAlias2 := "death_teleport"
-
 	return []entities.PlayerBonus{
 		{Name: &bonusName1, Alias: &bonusAlias1},
-		{Name: &bonusName2, Alias: &bonusAlias2},
 	}
 }

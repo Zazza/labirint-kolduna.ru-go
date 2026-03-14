@@ -109,6 +109,7 @@ func (l *sectionUpdate) Update(ctx context.Context, player entities.Player, tran
 		Debuff:    &playerChanged.Debuff,
 		Buff:      &playerChanged.Buff,
 		BonusList: &playerChanged.Bonus,
+		Gold:      &playerChanged.Gold,
 	})
 	if err != nil {
 		return err
