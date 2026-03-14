@@ -294,13 +294,19 @@ func (s *battleSectionService) showStartBattleInfo(
 			return dto.ActivityResponse{}, err
 		}
 
+		sleepyTransition := false
+		if player.Section.Type == gameDTO.SectionTypeSleepy {
+			sleepyTransition = true
+		}
+
 		return dto.ActivityResponse{
 			Text: text + " <div align='center'>💀 Тебя убили</div>",
 			Type: dto.CHOICE,
 			Transitions: []dto.TransitionDTO{
 				{
-					Text:         "Продолжить",
-					TransitionID: gotoSection,
+					Text:             "Продолжить",
+					TransitionID:     gotoSection,
+					SleepyTransition: sleepyTransition,
 				},
 			},
 		}, nil

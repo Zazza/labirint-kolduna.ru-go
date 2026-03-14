@@ -85,7 +85,7 @@ func (r *battleRepository) RemoveSleepyByPlayerIDAndSectionNumber(
 	ctx context.Context,
 	tx *gorm.DB,
 	playerId uuid.UUID,
-	sectionId uint,
+	sectionNumber uint,
 ) error {
 	if tx == nil {
 		tx = r.db
@@ -95,7 +95,7 @@ func (r *battleRepository) RemoveSleepyByPlayerIDAndSectionNumber(
 		&entities.Battle{},
 		"player_id = ? AND section = ?",
 		playerId,
-		sectionId,
+		sectionNumber,
 	).Error; err != nil {
 		return err
 	}

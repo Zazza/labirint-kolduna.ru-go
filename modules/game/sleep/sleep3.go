@@ -40,7 +40,7 @@ func (s sleep3) Execute(
 
 		helper.DescriptionMessage(
 			s.player.ID,
-			"<p>Дрёма убил тебя</p>",
+			"<p>Татарский Мурза убил тебя</p>",
 		)
 	} else {
 		exit = true

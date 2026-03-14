@@ -87,11 +87,13 @@ func (c *sectionController) GetSection(ctx *gin.Context) {
 	}
 
 	if result.Player.Health == 0 && player.Section.Number != gameDto.SectionDeath {
-		result.Transitions = []gameDto.TransitionDTO{
-			{
-				Text:  "Ты погиб... Секция 9",
-				Death: true,
-			},
+		if player.Section.Type != gameDto.SectionTypeSleepy {
+			result.Transitions = []gameDto.TransitionDTO{
+				{
+					Text:  "Ты погиб... Секция 9",
+					Death: true,
+				},
+			}
 		}
 	}
 

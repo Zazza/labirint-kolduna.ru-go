@@ -72,7 +72,12 @@ func (e *entrance) Handle(ctx context.Context) error {
 			),
 		)
 
-		newPlayerHealth := e.player.Health + healthRecovery
+		var newPlayerHealth uint
+		if e.player.HealthMax <= e.player.Health+healthRecovery {
+			newPlayerHealth = e.player.HealthMax
+		} else {
+			newPlayerHealth = e.player.Health + healthRecovery
+		}
 
 		err = playerUpdateListener.Handle(ctx, event.PlayerUpdateEvent{
 			PlayerID: e.player.ID,

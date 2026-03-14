@@ -23,7 +23,7 @@ type BattleRepository interface {
 	GetByPlayerIdAndSectionNumber(tx *gorm.DB, playerId uuid.UUID, section uint) ([]entities.Battle, error)
 	FindLastByPlayerIdAndSectionNumber(tx *gorm.DB, playerId uuid.UUID, section uint) (*entities.Battle, error)
 	AddRecord(tx *gorm.DB, battle entities.Battle) (entities.Battle, error)
-	RemoveSleepyByPlayerIDAndSectionNumber(ctx context.Context, tx *gorm.DB, playerId uuid.UUID, sectionId uint) error
+	RemoveSleepyByPlayerIDAndSectionNumber(ctx context.Context, tx *gorm.DB, playerId uuid.UUID, sectionNumber uint) error
 }
 
 type DiceRepository interface {

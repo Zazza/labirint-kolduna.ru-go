@@ -198,34 +198,16 @@ func (s *abilityService) SleepChoice(ctx context.Context, player entities.Player
 		return dto.SleepDTO{}, err
 	}
 
-	template, err := template2.GetDicesTemplate(ctx, *dice1, *dice2, true)
-	if err != nil {
-		return dto.SleepDTO{}, err
-	}
-
-	helper.DescriptionMessage(
-		player.ID,
-		fmt.Sprintf("<p>%s</p>", template),
-	)
-
 	if resultDTO.Exit {
-		sectionRepository := repository.NewSectionRepository(s.db)
-		returnToSection, err := sectionRepository.GetBySectionNumber(ctx, s.db, player.ReturnToSection)
-		if err != nil {
-			return dto.SleepDTO{}, err
-		}
-
-		err = s.playerUpdateListener.Handle(ctx, event.PlayerUpdateEvent{
-			PlayerID:  player.ID,
-			SectionID: &returnToSection.ID,
-		})
+		exit := sleep.NewExit(s.db, player)
+		err := exit.Return(ctx)
 		if err != nil {
 			return dto.SleepDTO{}, err
 		}
 
 		helper.DescriptionMessage(
 			player.ID,
-			"<p>Успешно вернулся из сонного царства</p>",
+			"<p>🏆 Успешно вернулся из сонного царства</p>",
 		)
 	}
 
@@ -234,6 +216,24 @@ func (s *abilityService) SleepChoice(ctx context.Context, player entities.Player
 		err = s.playerUpdateListener.Handle(ctx, event.PlayerUpdateEvent{
 			PlayerID: player.ID,
 			Health:   &health,
+		})
+		if err != nil {
+			return dto.SleepDTO{}, err
+		}
+
+		helper.DescriptionMessage(
+			player.ID,
+			"<p>💀 Погиб в сонном царстве</p>",
+		)
+
+		deathSection, err := s.sectionRepository.GetBySectionNumber(ctx, s.db, 9)
+		if err != nil {
+			return dto.SleepDTO{}, err
+		}
+
+		err = s.playerUpdateListener.Handle(ctx, event.PlayerUpdateEvent{
+			PlayerID:  player.ID,
+			SectionID: &deathSection.ID,
 		})
 		if err != nil {
 			return dto.SleepDTO{}, err

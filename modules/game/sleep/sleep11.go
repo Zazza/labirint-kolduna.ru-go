@@ -31,6 +31,7 @@ func (s *sleep11) Execute(
 	dice2 uint,
 ) (dto.SleepyKingdomDTO, error) {
 	death := false
+	exit := false
 
 	rollTheDices := dice.NewRollTheDices(s.db, &s.player)
 
@@ -47,6 +48,7 @@ func (s *sleep11) Execute(
 			"<p>Ты мертв</p>",
 		)
 	} else {
+		exit = true
 		health := s.player.Health - (*diceDay1 + *diceDay2)
 
 		helper.DescriptionMessage(
@@ -72,7 +74,7 @@ func (s *sleep11) Execute(
 	}
 
 	return dto.SleepyKingdomDTO{
-		Exit:    false,
+		Exit:    exit,
 		Death:   death,
 		NextTry: false,
 	}, nil
