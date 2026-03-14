@@ -52,7 +52,7 @@ type PlayerSectionRepository interface {
 	Create(ctx context.Context, tx *gorm.DB, playerID uuid.UUID, sectionID uuid.UUID) error
 	UpdateLastTargetSection(ctx context.Context, tx *gorm.DB, playerID uuid.UUID, targetSectionID uuid.UUID) error
 	AddDescriptionLog(ctx context.Context, tx *gorm.DB, playerID uuid.UUID, description string) error
-	GetLasSectionDescriptions(ctx context.Context, tx *gorm.DB, playerID uuid.UUID) (*[]entities.DescriptionLog, error)
+	GetLastSectionDescriptions(ctx context.Context, tx *gorm.DB, playerID uuid.UUID) (*[]entities.DescriptionLog, error)
 	GetLastPlayerSection(ctx context.Context, tx *gorm.DB, playerID uuid.UUID) (*entities.PlayerSection, error)
 	RemoveLastPlayerSection(ctx context.Context, tx *gorm.DB, playerID uuid.UUID) error
 	GetPreviousSectionIdBySectionId(ctx context.Context, tx *gorm.DB, playerID uuid.UUID, sectionID uuid.UUID) (*entities.PlayerSection, error)

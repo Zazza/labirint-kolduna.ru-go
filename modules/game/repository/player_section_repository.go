@@ -89,7 +89,7 @@ func (r *playerSectionRepository) AddDescriptionLog(
 	return nil
 }
 
-func (r *playerSectionRepository) GetLasSectionDescriptions(
+func (r *playerSectionRepository) GetLastSectionDescriptions(
 	ctx context.Context,
 	tx *gorm.DB,
 	playerID uuid.UUID,

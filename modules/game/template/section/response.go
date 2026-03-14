@@ -85,7 +85,7 @@ func (r *sleepySectionResponse) GetSectionText(ctx context.Context) (string, err
 
 	sectionText := r.player.Section.Text
 
-	descriptions, err := playerSectionRepository.GetLasSectionDescriptions(ctx, r.db, r.player.ID)
+	descriptions, err := playerSectionRepository.GetLastSectionDescriptions(ctx, r.db, r.player.ID)
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		return sectionText, nil
 	} else if err != nil {
