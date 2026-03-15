@@ -145,6 +145,10 @@ func (s *abilityService) Sleep(ctx context.Context, player entities.Player) (dto
 		return dto.SleepDTO{}, dto.MessageAlreadySleepyKingdom
 	}
 
+	if player.Section.Number == dto.SectionDeath {
+		return dto.SleepDTO{}, dto.MessageDenySleepyKingdom
+	}
+
 	entrance := sleep.NewEntrance(s.db, player)
 	err := entrance.Handle(ctx)
 	if err != nil {
