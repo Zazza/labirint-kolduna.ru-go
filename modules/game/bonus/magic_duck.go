@@ -69,9 +69,12 @@ func (d magicDuck) AntiMagic(ctx context.Context, player entities.Player) error 
 		if debuff.Alias == entities.AliasMagicReason {
 			player.Health += *debuff.Health
 
+			debuffList := helpers.RemoveDebuff(d.player.Debuff, entities.AliasMagicReason)
+
 			err = playerUpdateListener.Handle(ctx, event.PlayerUpdateEvent{
 				PlayerID: player.ID,
 				Health:   debuff.Health,
+				Debuff:   &debuffList,
 			})
 			if err != nil {
 				return err

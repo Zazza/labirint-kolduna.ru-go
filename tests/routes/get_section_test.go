@@ -69,7 +69,7 @@ func TestGetSection_BattleSection(t *testing.T) {
 	user := helpers2.CreateTestUser(t, testCtx.DB)
 
 	battleStart := "dices"
-	section, enemies := helpers2.SetupBattleSection(t, testCtx.DB, 30, &battleStart)
+	section, enemies := helpers2.SetupBattleSection(t, testCtx.DB, 30, 2, &battleStart)
 
 	player := helpers2.CreateTestPlayer(t, testCtx.DB, user.ID, section.ID)
 	helpers2.CreatePlayerSection(t, testCtx.DB, entities.PlayerSection{

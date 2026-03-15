@@ -33,8 +33,6 @@ func NewDeathSpell(db *gorm.DB, player entities.Player) dto.Bonus {
 }
 
 func (d deathSpell) Execute(ctx context.Context, req dto.BonusRequest) error {
-	// Проверяем, что в текущей секции идет бой
-	// Для этого получаем список врагов боя через common
 	common, err := battleCommon.NewCommon(ctx, d.db, &d.player)
 	if err != nil {
 		return err

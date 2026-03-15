@@ -98,6 +98,11 @@ func setupGinTestServer(injector *do.Injector, jwtService authService.JWTService
 			battleController.Battle,
 		)
 		gameRoutes.POST(
+			"/ability/bonus",
+			middlewares.Authenticate(jwtService),
+			abilityController.Bonus,
+		)
+		gameRoutes.POST(
 			"/ability/sleep",
 			middlewares.Authenticate(jwtService),
 			abilityController.Sleep,
@@ -145,6 +150,20 @@ func CreateTestPlayer(t *testing.T, db *gorm.DB, userID uuid.UUID, sectionID uui
 	return player
 }
 
+func GetPlayerByPlayerID(t *testing.T, db *gorm.DB, PlayerID uuid.UUID) *entities.Player {
+	var player entities.Player
+	err := db.Where("id = ?", PlayerID).First(&player).Error
+	require.NoError(t, err, "Player with ID %d not found", PlayerID)
+	return &player
+}
+
+func GetEnemyByEnemyID(t *testing.T, db *gorm.DB, EnemyID uuid.UUID) *entities.PlayerSectionEnemy {
+	var enemy entities.PlayerSectionEnemy
+	err := db.Where("enemy_id = ?", EnemyID).First(&enemy).Error
+	require.NoError(t, err, "Enemy with ID %d not found", EnemyID)
+	return &enemy
+}
+
 func CreateTestEnemy(t *testing.T, db *gorm.DB, alias string) *entities.Enemy {
 	enemyID := uuid.New()
 	enemy := &entities.Enemy{
@@ -185,13 +204,13 @@ func CreateTestTransition(t *testing.T, db *gorm.DB, sectionID, targetSectionID 
 	return transition
 }
 
-func SetupBattleSection(t *testing.T, db *gorm.DB, number uint, battleStart *string) (*entities.Section, []*entities.Enemy) {
+func SetupBattleSection(t *testing.T, db *gorm.DB, number uint, enemyCount uint, battleStart *string) (*entities.Section, []*entities.Enemy) {
 	sectionID := uuid.New()
 
 	var battleSteps []*string
 
-	enemies := make([]*entities.Enemy, 2)
-	for i := 0; i < 2; i++ {
+	enemies := make([]*entities.Enemy, enemyCount)
+	for i := 0; uint(i) < enemyCount; i++ {
 		enemies[i] = CreateTestEnemy(t, db, "enemy_"+uuid.New().String()[:8])
 
 		battleSteps = []*string{StringPtr("player"), StringPtr(enemies[i].Alias)}

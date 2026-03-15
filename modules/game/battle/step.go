@@ -139,5 +139,8 @@ func (s *step) GetNextStepIndex(lastStepIndex uint) uint {
 }
 
 func (s *step) GetCurrentStepIndex() uint {
+	if s.lastBattleLog == nil {
+		return 0
+	}
 	return s.lastBattleLog.Step
 }

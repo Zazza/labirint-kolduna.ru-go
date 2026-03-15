@@ -29,7 +29,7 @@ func NewInstantMovement(db *gorm.DB, player entities.Player) dto.Bonus {
 	}
 }
 
-func (d instantMovement) Execute(ctx context.Context, req dto.BonusRequest) error {
+func (d instantMovement) Execute(ctx context.Context, _ dto.BonusRequest) error {
 	sectionsRepository := repository.NewSectionRepository(d.db)
 	section, err := sectionsRepository.GetBySectionNumber(ctx, d.db, 3)
 	if err != nil {

@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var AntiPoisonSpellName = "Заклинание смерти"
+var AntiPoisonSpellName = "Заклятье против яда"
 var AntiPoisonSpellAlias = "anti_poison_spell"
 
 type antiPoisonSpell struct {
