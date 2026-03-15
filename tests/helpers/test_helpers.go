@@ -73,6 +73,7 @@ func setupGinTestServer(injector *do.Injector, jwtService authService.JWTService
 	battleController := do.MustInvoke[controller.BattleController](injector)
 	choiceController := do.MustInvoke[controller.ChoiceController](injector)
 	diceController := do.MustInvoke[controller.DiceController](injector)
+	abilityController := do.MustInvoke[controller.AbilityController](injector)
 
 	gameRoutes := router.Group("/api/game")
 	{
@@ -95,6 +96,11 @@ func setupGinTestServer(injector *do.Injector, jwtService authService.JWTService
 			"/battle",
 			middlewares.Authenticate(jwtService),
 			battleController.Battle,
+		)
+		gameRoutes.POST(
+			"/ability/sleep",
+			middlewares.Authenticate(jwtService),
+			abilityController.Sleep,
 		)
 	}
 
@@ -259,7 +265,6 @@ func ParseData[T any](t *testing.T, resp *http.Response) T {
 }
 
 var (
-	sectionCounter  uint = 1000
 	enemyCounter    uint = 0
 	transitionOrder uint = 1
 )
@@ -279,7 +284,6 @@ func SetupRouteTest(t *testing.T) *TestContext {
 
 	CleanupAllTables(db, ctx)
 
-	sectionCounter = 1000
 	transitionOrder = 1
 
 	return &TestContext{
@@ -326,7 +330,7 @@ func CreateTestSection(t *testing.T, db *gorm.DB, number uint, sectionType entit
 	section := &entities.Section{
 		ID:          sectionID,
 		Type:        sectionType,
-		Number:      sectionCounter + number,
+		Number:      number,
 		Text:        "Test section text",
 		Dices:       false,
 		BattleStart: nil,

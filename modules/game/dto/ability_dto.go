@@ -11,7 +11,7 @@ var (
 	MessageBonusNotDefined                = errors.New("message bonus not defined")
 	MessageSleepyKingdomSectionNotDefined = errors.New("sleepy kingdom section not defined")
 	MessageAlreadySleepyKingdom           = errors.New("already sleepy kingdom")
-	MessageDenySleepyKingdom              = errors.New("deny entrance to sleepy kingdom")
+	MessageTheDeadNeverSleep              = errors.New("the dead never sleep")
 	MessageCannotUseInSleepyKingdom       = errors.New("cannot use in sleepy kingdom")
 )
 
