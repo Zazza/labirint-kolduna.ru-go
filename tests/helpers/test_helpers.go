@@ -98,6 +98,11 @@ func setupGinTestServer(injector *do.Injector, jwtService authService.JWTService
 			battleController.Battle,
 		)
 		gameRoutes.POST(
+			"/ability/meds",
+			middlewares.Authenticate(jwtService),
+			abilityController.Meds,
+		)
+		gameRoutes.POST(
 			"/ability/bonus",
 			middlewares.Authenticate(jwtService),
 			abilityController.Bonus,

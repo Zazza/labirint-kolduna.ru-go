@@ -69,6 +69,10 @@ func (s *abilityService) Meds(ctx context.Context, player entities.Player) (dto.
 		return dto.MedsDTO{Result: false}, dto.MessageCannotUseInSleepyKingdom
 	}
 
+	if player.Health == 0 {
+		return dto.MedsDTO{Result: false}, dto.MessageCannotUseMedsIfDead
+	}
+
 	if player.Meds.Count == 0 {
 		return dto.MedsDTO{
 			Result: false,

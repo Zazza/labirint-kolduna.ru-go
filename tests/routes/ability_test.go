@@ -12,6 +12,56 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMeds_Success(t *testing.T) {
+	testCtx := helpers2.SetupRouteTest(t)
+	defer helpers2.CleanupAllTables(testCtx.DB, testCtx.Context)
+
+	user := helpers2.CreateTestUser(t, testCtx.DB)
+	section := helpers2.CreateTestSection(t, testCtx.DB, 1, entities.SectionType("normal"))
+	player := helpers2.CreateTestPlayer(t, testCtx.DB, user.ID, section.ID)
+	player.Health = 1
+	player.Meds = entities.Meds{Name: "Лекарства", Item: "chain mail", Count: 15}
+	testCtx.DB.Save(player)
+
+	jwtSvc := helpers2.SetupTestAuthService(t)
+	token := helpers2.CreateAuthenticatedRequest(t, user.ID, jwtSvc)
+
+	resp := helpers2.MakeRequest(t, testCtx.Server, "POST", "/api/game/ability/meds", token, nil)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	apiResp := helpers2.ParseResponse[gameDto.CurrentResponse](t, resp)
+	assert.True(t, apiResp.Success)
+
+	player = helpers2.GetPlayerByPlayerID(t, testCtx.DB, player.ID)
+
+	assert.Equal(t, player.Meds.Count, 14)
+}
+
+func TestMeds_PlayerDead(t *testing.T) {
+	testCtx := helpers2.SetupRouteTest(t)
+	defer helpers2.CleanupAllTables(testCtx.DB, testCtx.Context)
+
+	user := helpers2.CreateTestUser(t, testCtx.DB)
+	section := helpers2.CreateTestSection(t, testCtx.DB, 1, entities.SectionType("normal"))
+	player := helpers2.CreateTestPlayer(t, testCtx.DB, user.ID, section.ID)
+	player.Health = 0
+	player.Meds = entities.Meds{Name: "Лекарства", Item: "chain mail", Count: 15}
+	testCtx.DB.Save(player)
+
+	jwtSvc := helpers2.SetupTestAuthService(t)
+	token := helpers2.CreateAuthenticatedRequest(t, user.ID, jwtSvc)
+
+	resp := helpers2.MakeRequest(t, testCtx.Server, "POST", "/api/game/ability/meds", token, nil)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	apiResp := helpers2.ParseResponse[gameDto.CurrentResponse](t, resp)
+	assert.False(t, apiResp.Success)
+
+	player = helpers2.GetPlayerByPlayerID(t, testCtx.DB, player.ID)
+
+	assert.Equal(t, player.Meds.Count, 15)
+}
+
 func TestSleep_Success(t *testing.T) {
 	testCtx := helpers2.SetupRouteTest(t)
 	defer helpers2.CleanupAllTables(testCtx.DB, testCtx.Context)

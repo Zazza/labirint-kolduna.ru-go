@@ -13,6 +13,7 @@ var (
 	MessageAlreadySleepyKingdom           = errors.New("already sleepy kingdom")
 	MessageTheDeadNeverSleep              = errors.New("the dead never sleep")
 	MessageCannotUseInSleepyKingdom       = errors.New("cannot use in sleepy kingdom")
+	MessageCannotUseMedsIfDead            = errors.New("cannot use meds if dead")
 )
 
 type (
