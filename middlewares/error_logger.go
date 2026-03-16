@@ -70,15 +70,6 @@ func ErrorLoggerMiddleware() gin.HandlerFunc {
 			errorMsg += " | IP: " + clientIP
 			errorMsg += " | UA: " + userAgent
 
-			// Добавляем тело запроса
-			if len(requestBody) > 0 {
-				bodyStr := string(requestBody)
-				if len(bodyStr) > 1000 {
-					bodyStr = bodyStr[:1000] + "..."
-				}
-				errorMsg += " | Request Body: " + bodyStr
-			}
-
 			// Добавляем текст ошибки
 			if errorBody != "" {
 				if len(errorBody) > 500 {
