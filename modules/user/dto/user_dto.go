@@ -42,7 +42,7 @@ var (
 type (
 	UserCreateRequest struct {
 		Name     string `json:"name" form:"name" binding:"required,min=2,max=100"`
-		Password string `json:"password" form:"password" binding:"required,min=4"`
+		Password string `json:"password" form:"password" binding:"required,min=8,max=128"`
 	}
 
 	UserResponse struct {

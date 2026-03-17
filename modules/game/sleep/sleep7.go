@@ -53,7 +53,7 @@ func (s *sleep7) Execute(
 			return dto.SleepyKingdomDTO{}, err
 		}
 
-		helper.DescriptionMessage(
+		helper.SafeHTMLDescriptionMessage(
 			s.player.ID,
 			fmt.Sprintf("<p>%s</p>", template),
 		)

@@ -2,7 +2,7 @@ package channel
 
 import (
 	"context"
-	"gamebook-backend/modules/game/listener/event"
+	event "gamebook-backend/modules/game/listener/event"
 )
 
 type EventChannel interface {
@@ -14,4 +14,12 @@ type EventChannel interface {
 	SubscribeEnemyUpdate(ctx context.Context) <-chan event.EnemyUpdateEvent
 	SubscribePlayerSectionUpdate(ctx context.Context) <-chan event.PlayerSectionEvent
 	SubscribePlayerLog(ctx context.Context) <-chan event.PlayerLogEvent
+	Close() error
+}
+
+func init() {
+	var _ event.PlayerUpdateEvent
+	var _ event.EnemyUpdateEvent
+	var _ event.PlayerSectionEvent
+	var _ event.PlayerLogEvent
 }

@@ -2,7 +2,6 @@ package listener
 
 import (
 	"gamebook-backend/modules/game/dto"
-
 	"gorm.io/gorm"
 )
 
@@ -11,20 +10,17 @@ type EventListenerRegistry interface {
 }
 
 type eventListenerRegistry struct {
-	factories map[string]EventListener
 	db        *gorm.DB
+	factories map[string]EventListener
 }
 
-func NewEventListenerRegistry(
-	db *gorm.DB,
-) EventListenerRegistry {
+func NewEventListenerRegistry(db *gorm.DB) EventListenerRegistry {
 	registry := &eventListenerRegistry{
-		factories: make(map[string]EventListener),
 		db:        db,
+		factories: make(map[string]EventListener),
 	}
 
 	registry.RegisterDefaults()
-
 	return registry
 }
 
@@ -39,5 +35,5 @@ func (r *eventListenerRegistry) Get(alias string) (EventListener, error) {
 func (r *eventListenerRegistry) RegisterDefaults() {
 	r.factories["enemy_update"] = NewEnemyUpdateListener(r.db)
 	r.factories["player_update"] = NewPlayerUpdateListener(r.db)
-	r.factories["player_section"] = NewPlayerSectionListener(r.db)
+	r.factories["player_section"] = NewPlayerSectionListener(nil, r.db)
 }

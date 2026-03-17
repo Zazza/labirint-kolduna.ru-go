@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"gamebook-backend/database/entities"
-	"gamebook-backend/modules/game/bonus/helpers"
+	bonusHelpers "gamebook-backend/modules/game/bonus/helpers"
 	"gamebook-backend/modules/game/dice"
 	"gamebook-backend/modules/game/dto"
 	"gamebook-backend/modules/game/helper"
@@ -77,7 +77,7 @@ func (w wand) Execute(ctx context.Context, req dto.BonusRequest) error {
 	randEnemy := rand.Intn(len(w.player.Section.SectionEnemies))
 	enemy := w.player.Section.SectionEnemies[randEnemy]
 
-	bonusList := helpers.RemoveBonus(w.player.Bonus, WandAlias)
+	bonusList := bonusHelpers.RemoveBonus(w.player.Bonus, WandAlias)
 	err = playerUpdateListener.Handle(ctx, event.PlayerUpdateEvent{
 		PlayerID:  w.player.ID,
 		BonusList: &bonusList,

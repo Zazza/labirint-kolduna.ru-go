@@ -5,8 +5,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
-	"os"
 	"time"
+
+	"gamebook-backend/config"
 
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -30,21 +31,22 @@ type jwtService struct {
 	refreshExpiry time.Duration
 }
 
-func NewJWTService() JWTService {
-	return &jwtService{
-		secretKey:     getSecretKey(),
-		issuer:        "Template",
-		accessExpiry:  time.Minute * 15,
-		refreshExpiry: time.Hour * 24 * 7,
+func NewJWTService(cfg *config.Config) JWTService {
+	accessExpiry, err := cfg.JWT.ParseAccessExpiry()
+	if err != nil {
+		log.Fatalf("Failed to parse JWT_ACCESS_EXPIRY: %v", err)
 	}
-}
+	refreshExpiry, err := cfg.JWT.ParseRefreshExpiry()
+	if err != nil {
+		log.Fatalf("Failed to parse JWT_REFRESH_EXPIRY: %v", err)
+	}
 
-func getSecretKey() string {
-	secretKey := os.Getenv("JWT_SECRET")
-	if secretKey == "" {
-		secretKey = "Template"
+	return &jwtService{
+		secretKey:     cfg.JWT.Secret,
+		issuer:        cfg.JWT.Issuer,
+		accessExpiry:  accessExpiry,
+		refreshExpiry: refreshExpiry,
 	}
-	return secretKey
 }
 
 func (j *jwtService) GenerateAccessToken(userId string) string {

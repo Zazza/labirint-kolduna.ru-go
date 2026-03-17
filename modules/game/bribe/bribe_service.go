@@ -97,7 +97,7 @@ func (s *bribeService) BribeAction(ctx context.Context, tx *gorm.DB, player enti
 			return err
 		}
 
-		helper.DescriptionMessage(player.ID, fmt.Sprintf("<p>Размер взятки: %s</p>", template))
+		helper.SafeHTMLDescriptionMessage(player.ID, fmt.Sprintf("<p>Размер взятки: %s</p>", template))
 
 		success := *diceFirst <= player.Gold
 		if success {
@@ -130,7 +130,7 @@ func (s *bribeService) BribeAction(ctx context.Context, tx *gorm.DB, player enti
 			return err
 		}
 
-		helper.DescriptionMessage(player.ID, fmt.Sprintf("<p>Размер взятки: %s</p>", template))
+		helper.SafeHTMLDescriptionMessage(player.ID, fmt.Sprintf("<p>Размер взятки: %s</p>", template))
 
 		success := *diceFirst+*diceSecond <= player.Gold
 		if success {

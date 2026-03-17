@@ -6,14 +6,13 @@ import (
 	authController "gamebook-backend/modules/auth/controller"
 	authRepo "gamebook-backend/modules/auth/repository"
 	authService "gamebook-backend/modules/auth/service"
-	playerSectionChannel "gamebook-backend/modules/game/channel"
+	"gamebook-backend/modules/game/channel"
 	abilityController "gamebook-backend/modules/game/controller"
 	battleController "gamebook-backend/modules/game/controller"
 	choiceController "gamebook-backend/modules/game/controller"
 	diceController "gamebook-backend/modules/game/controller"
 	sectionController "gamebook-backend/modules/game/controller"
 	playerLogListener "gamebook-backend/modules/game/listener"
-	playerUpdateListener "gamebook-backend/modules/game/listener"
 	logService "gamebook-backend/modules/game/log"
 	battleRepo "gamebook-backend/modules/game/repository"
 	bonusRepo "gamebook-backend/modules/game/repository"
@@ -48,7 +47,7 @@ func RegisterDependencies(cfg *config.Config, injector *do.Injector) {
 	InitDatabase(cfg, injector)
 
 	do.ProvideNamed(injector, constants.JWTService, func(i *do.Injector) (authService.JWTService, error) {
-		return authService.NewJWTService(), nil
+		return authService.NewJWTService(cfg), nil
 	})
 
 	db := do.MustInvokeNamed[*gorm.DB](injector, constants.DB)
@@ -67,17 +66,12 @@ func RegisterDependencies(cfg *config.Config, injector *do.Injector) {
 	bonusRepository := bonusRepo.NewBonusRepository(db)
 	playerLogRepository := playerRepo.NewPlayerLogRepository(db)
 
+	eventChannel := channel.NewInMemoryEventChannel(nil)
+
 	ctx := context.Background()
 
-	playerUpdateListenerInstance := playerUpdateListener.NewPlayerSectionChannelListener(
-		playerSectionChannel.ChPlayerSection,
-		db,
-		playerSectionRepository,
-	)
-	go playerUpdateListenerInstance.Update(ctx)
-
 	playerLogListenerInstance := playerLogListener.NewPlayerLogListener(
-		playerSectionChannel.ChPlayerLog,
+		eventChannel,
 		db,
 		playerLogRepository,
 	)
@@ -134,6 +128,7 @@ func RegisterDependencies(cfg *config.Config, injector *do.Injector) {
 		transitionRepository,
 		playerSectionRepository,
 		playerSectionEnemyRepository,
+		bonusRepository,
 		db,
 	)
 

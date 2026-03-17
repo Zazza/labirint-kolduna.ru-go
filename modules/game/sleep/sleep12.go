@@ -51,10 +51,10 @@ func (s *sleep12) Execute(
 		}
 
 		if 6 <= *diceBow1+*diceBow2 {
-			s.writeToChannel(fmt.Sprintf("<p>%s ты попал стрелой!</p>", templateArrows))
+			helper.SafeHTMLDescriptionMessage(s.player.ID, fmt.Sprintf("<p>%s ты попал стрелой!</p>", templateArrows))
 			fullArrowsDamage += playerArrowDamage
 		} else {
-			s.writeToChannel(fmt.Sprintf("<p>%s ты промазал!</p>", templateArrows))
+			helper.SafeHTMLDescriptionMessage(s.player.ID, fmt.Sprintf("<p>%s ты промазал!</p>", templateArrows))
 		}
 	}
 
@@ -122,7 +122,7 @@ func (s *sleep12) Execute(
 				return dto.SleepyKingdomDTO{}, err
 			}
 
-			s.writeToChannel(fmt.Sprintf(
+			helper.SafeHTMLDescriptionMessage(s.player.ID, fmt.Sprintf(
 				"<p>%s Ты наносишь урон руками %d HP!</p>",
 				templateDamage,
 				playerDamage,

@@ -32,6 +32,8 @@ const (
 
 	CHOICE = "choice"
 	BATTLE = "battle"
+
+	StepTypeNormal = "normal"
 )
 
 var (
@@ -153,6 +155,17 @@ type (
 		Type         entities.SectionType
 		Transitions  []TransitionDTO
 		Player       PlayerActivityResponse
+		RollTheDices bool
+	}
+
+	SectionTemplate struct {
+		Section      uint
+		Text         string
+		Type         entities.SectionType
+		Transitions  []TransitionDTO
+		Choice       entities.Choice
+		Player       PlayerInfo
+		Dices        []uint
 		RollTheDices bool
 	}
 )

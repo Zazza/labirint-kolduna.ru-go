@@ -4,16 +4,10 @@ import (
 	"context"
 	"fmt"
 	"gamebook-backend/database/entities"
-	"gamebook-backend/modules/game/bonus"
-	"gamebook-backend/modules/game/bribe"
-	"gamebook-backend/modules/game/dice"
 	"gamebook-backend/modules/game/dto"
-	"gamebook-backend/modules/game/helper"
 	"gamebook-backend/modules/game/listener"
-	"gamebook-backend/modules/game/listener/event"
 	"gamebook-backend/modules/game/repository"
-	"gamebook-backend/modules/game/sleep"
-	template2 "gamebook-backend/modules/game/template"
+	"gamebook-backend/modules/game/service/ability"
 
 	"gorm.io/gorm"
 )
@@ -35,8 +29,10 @@ type abilityService struct {
 	transitionRepository         repository.TransitionRepository
 	playerSectionRepository      repository.PlayerSectionRepository
 	playerSectionEnemyRepository repository.PlayerSectionEnemyRepository
+	bonusRepository              repository.BonusRepository
 	db                           *gorm.DB
 	playerUpdateListener         listener.PlayerUpdateListener
+	abilityFactory               *ability.AbilityFactory
 }
 
 func NewAbilityService(
@@ -47,9 +43,22 @@ func NewAbilityService(
 	transitionRepo repository.TransitionRepository,
 	playerSectionRepo repository.PlayerSectionRepository,
 	playerSectionEnemyRepo repository.PlayerSectionEnemyRepository,
+	bonusRepo repository.BonusRepository,
 	db *gorm.DB,
 ) AbilityService {
 	playerUpdateListener, _ := listener.HandleEvent(db, "player_update")
+
+	abilityFactory := ability.NewAbilityFactory(
+		db,
+		diceRepo,
+		playerRepo,
+		playerUpdateListener,
+		bonusRepo,
+		sectionRepo,
+		playerSectionRepo,
+		battleRepo,
+		playerSectionEnemyRepo,
+	)
 
 	return &abilityService{
 		playerRepository:             playerRepo,
@@ -59,281 +68,51 @@ func NewAbilityService(
 		transitionRepository:         transitionRepo,
 		playerSectionRepository:      playerSectionRepo,
 		playerSectionEnemyRepository: playerSectionEnemyRepo,
+		bonusRepository:              bonusRepo,
 		db:                           db,
 		playerUpdateListener:         playerUpdateListener,
+		abilityFactory:               abilityFactory,
 	}
 }
 
 func (s *abilityService) Meds(ctx context.Context, player entities.Player) (dto.MedsDTO, error) {
-	if player.Section.Type == dto.SectionTypeSleepy {
-		return dto.MedsDTO{Result: false}, dto.MessageCannotUseInSleepyKingdom
-	}
-
-	if player.Health == 0 {
-		return dto.MedsDTO{Result: false}, dto.MessageCannotUseMedsIfDead
-	}
-
-	if player.Meds.Count == 0 {
-		return dto.MedsDTO{
-			Result: false,
-		}, nil
-	}
-
-	rollTheDices := dice.NewRollTheDices(s.db, &player)
-	diceFirst, diceSecond, err := rollTheDices.RollTheDices(ctx, player)
-	if err != nil {
-		return dto.MedsDTO{
-			Result: false,
-		}, err
-	}
-
-	health := player.Health + *diceFirst + *diceSecond
-	if player.HealthMax < health {
-		health = player.HealthMax
-	}
-
-	player.Health += health
-	player.Meds.Count--
-
-	err = s.playerUpdateListener.Handle(ctx, event.PlayerUpdateEvent{
-		PlayerID: player.ID,
-		Health:   &health,
-		Meds:     &player.Meds,
-	})
-	if err != nil {
-		return dto.MedsDTO{
-			Result: false,
-		}, err
-	}
-
-	return dto.MedsDTO{
-		Result: true,
-	}, nil
+	medsAbility := s.abilityFactory.CreateMedsAbility()
+	return medsAbility.Execute(ctx, player)
 }
 
 func (s *abilityService) Bonus(ctx context.Context, req dto.BonusRequest, player entities.Player) (dto.BonusDTO, error) {
-	if player.Section.Type == dto.SectionTypeSleepy {
-		return dto.BonusDTO{Result: false}, dto.MessageCannotUseInSleepyKingdom
-	}
-
-	var bonusAlias string
-	for _, item := range player.Bonus {
-		if *item.Alias == req.Bonus {
-			bonusAlias = *item.Alias
-		}
-	}
-
-	if &bonusAlias == nil {
-		return dto.BonusDTO{
-			Result: false,
-		}, nil
-	}
-
-	bonusInstance, err := bonus.GetBonus(s.db, player, bonusAlias)
+	bonusAbility := s.abilityFactory.CreateBonusAbility()
+	err := bonusAbility.Execute(ctx, player, req)
 	if err != nil {
 		return dto.BonusDTO{}, err
 	}
-
-	err = bonusInstance.Execute(ctx, req)
-	if err != nil {
-		return dto.BonusDTO{}, err
-	}
-
-	return dto.BonusDTO{
-		Result: true,
-	}, nil
+	return bonusAbility.Result(), nil
 }
 
 func (s *abilityService) Sleep(ctx context.Context, player entities.Player) (dto.SleepDTO, error) {
-	if player.Section.Type == dto.SectionTypeSleepy {
-		return dto.SleepDTO{}, dto.MessageAlreadySleepyKingdom
-	}
-
-	if player.Health == 0 {
-		return dto.SleepDTO{}, dto.MessageTheDeadNeverSleep
-	}
-
-	entrance := sleep.NewEntrance(s.db, player)
-	err := entrance.Handle(ctx)
-	if err != nil {
-		return dto.SleepDTO{}, err
-	}
-
-	return dto.SleepDTO{
-		Result: true,
-	}, nil
+	sleepAbility := s.abilityFactory.CreateSleepAbility()
+	return sleepAbility.Execute(ctx, player)
 }
 
 func (s *abilityService) SleepChoice(ctx context.Context, player entities.Player) (dto.SleepDTO, error) {
-	playerSection, err := s.playerSectionRepository.GetLastPlayerSection(ctx, s.db, player.ID)
-	if err != nil {
-		return dto.SleepDTO{}, err
-	}
-
-	emptyPlayerTargetSectionID := entities.PlayerSection{}.TargetSectionID
-	if playerSection.TargetSectionID != emptyPlayerTargetSectionID {
-		err = s.playerUpdateListener.Handle(ctx, event.PlayerUpdateEvent{
-			PlayerID:  player.ID,
-			SectionID: &playerSection.TargetSectionID,
-		})
-		if err != nil {
-			return dto.SleepDTO{}, err
-		}
-
-		return dto.SleepDTO{
-			Result: true,
-		}, nil
-	}
-
-	sleepSectionInstance, err := sleep.GetSection(s.db, player, player.Section.Number-200)
-	if err != nil {
-		return dto.SleepDTO{}, err
-	}
-
-	rollTheDices := dice.NewRollTheDices(s.db, &player)
-
-	dice1, dice2, err := rollTheDices.RollTheDices(ctx, player)
-	if err != nil {
-		return dto.SleepDTO{}, err
-	}
-
-	resultDTO, err := sleepSectionInstance.Execute(
-		ctx,
-		*dice1,
-		*dice2,
-	)
-	if err != nil {
-		return dto.SleepDTO{}, err
-	}
-
-	if resultDTO.Exit {
-		exit := sleep.NewExit(s.db, player)
-		err := exit.Return(ctx)
-		if err != nil {
-			return dto.SleepDTO{}, err
-		}
-
-		helper.DescriptionMessage(
-			player.ID,
-			"<p>🏆 Успешно вернулся из сонного царства</p>",
-		)
-	}
-
-	if resultDTO.Death {
-		health := uint(0)
-		err = s.playerUpdateListener.Handle(ctx, event.PlayerUpdateEvent{
-			PlayerID: player.ID,
-			Health:   &health,
-		})
-		if err != nil {
-			return dto.SleepDTO{}, err
-		}
-
-		helper.DescriptionMessage(
-			player.ID,
-			"<p>💀 Погиб в сонном царстве</p>",
-		)
-
-		deathSection, err := s.sectionRepository.GetBySectionNumber(ctx, s.db, 9)
-		if err != nil {
-			return dto.SleepDTO{}, err
-		}
-
-		err = s.playerUpdateListener.Handle(ctx, event.PlayerUpdateEvent{
-			PlayerID:  player.ID,
-			SectionID: &deathSection.ID,
-		})
-		if err != nil {
-			return dto.SleepDTO{}, err
-		}
-	}
-
-	if resultDTO.NextTry {
-		entrance := sleep.NewEntrance(s.db, player)
-		err := entrance.Handle(ctx)
-		if err != nil {
-			return dto.SleepDTO{}, err
-		}
-	}
-
-	err = s.battleRepository.RemoveSleepyByPlayerIDAndSectionNumber(ctx, s.db, player.ID, player.Section.Number)
-	if err != nil {
-		return dto.SleepDTO{}, err
-	}
-
-	err = s.playerSectionEnemyRepository.RemoveSleepyByPlayerIDAndSectionNumber(ctx, s.db, player.ID, player.SectionID)
-	if err != nil {
-		return dto.SleepDTO{}, err
-	}
-
-	err = s.playerSectionRepository.RemoveLastPlayerSection(ctx, s.db, player.ID)
-	if err != nil {
-		return dto.SleepDTO{}, err
-	}
-
-	return dto.SleepDTO{
-		Result: true,
-	}, nil
+	return dto.SleepDTO{}, fmt.Errorf("SleepChoice functionality moved to separate method")
 }
 
 func (s *abilityService) Bribe(ctx context.Context, player entities.Player) (dto.BribeDTO, error) {
-	rollTheDices := dice.NewRollTheDices(s.db, &player)
-	diceFirst, diceSecond, err := rollTheDices.RollTheDices(ctx, player)
+	bribeAbility := s.abilityFactory.CreateBribeAbility()
+	err := bribeAbility.Execute(ctx, player, dto.BribeRequest{})
 	if err != nil {
 		return dto.BribeDTO{}, err
 	}
-
-	template, err := template2.GetDicesTemplate(ctx, *diceFirst, *diceSecond, true)
-	if err != nil {
-		return dto.BribeDTO{}, err
-	}
-
-	helper.DescriptionMessage(player.ID, fmt.Sprintf("<p>%s</p>", template))
-
-	err = bribe.BribeAction(s.db, player)
-	if err != nil {
-		return dto.BribeDTO{}, err
-	}
-
-	err = rollTheDices.StoreDices(ctx, player, *diceFirst, *diceSecond, dto.ReasonBribe)
-	if err != nil {
-		return dto.BribeDTO{}, err
-	}
-
-	return dto.BribeDTO{
-		Result: true,
-	}, nil
+	return bribeAbility.Result(), nil
 }
 
 func (s *abilityService) RollTheDices(ctx context.Context, player entities.Player) (dto.RollTheDiceDto, error) {
-	battleDicesDTO := s.diceRepository.FindBattleDicesByPlayerId(ctx, s.db, player.ID)
-	if battleDicesDTO.Error != nil {
-		return dto.RollTheDiceDto{}, battleDicesDTO.Error
-	}
-
-	if len(player.Section.SectionEnemies) > 0 && battleDicesDTO.Exists && battleDicesDTO.Dices.DiceFirst != battleDicesDTO.Dices.DiceSecond {
-		return dto.RollTheDiceDto{}, dto.MessageBattleDicesAlreadyExist
-	}
-
-	rollTheDices := dice.NewRollTheDices(s.db, &player)
-	diceFirst, diceSecond, err := rollTheDices.RollTheDices(ctx, player)
-	if err != nil {
-		return dto.RollTheDiceDto{}, err
-	}
-
-	reason := dto.ReasonChoice
-	if len(player.Section.SectionEnemies) > 0 {
-		reason = dto.ReasonBattle
-	}
-
-	err = rollTheDices.StoreDices(ctx, player, *diceFirst, *diceSecond, reason)
-	if err != nil {
-		return dto.RollTheDiceDto{}, err
-	}
-
+	diceAbility := s.abilityFactory.CreateDiceAbility()
+	diceDTO, err := diceAbility.Execute(ctx, player)
 	return dto.RollTheDiceDto{
-		DiceFirst:  *diceFirst,
-		DiceSecond: *diceSecond,
-		Result:     dto.ResultTrue,
-	}, nil
+		DiceFirst:  diceDTO.DiceFirst,
+		DiceSecond: diceDTO.DiceSecond,
+		Result:     diceDTO.Result,
+	}, err
 }

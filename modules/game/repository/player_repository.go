@@ -5,7 +5,6 @@ import (
 	"errors"
 	"gamebook-backend/database/entities"
 	playerDto "gamebook-backend/modules/game/dto"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -82,30 +81,31 @@ func (r *playerRepository) Create(
 	userId uuid.UUID,
 	section entities.Section,
 ) (entities.Player, error) {
-	if tx == nil {
-		tx = r.db
-	}
-
 	player := entities.Player{
 		ID:        uuid.New(),
-		SectionID: section.ID,
 		UserID:    userId,
+		SectionID: section.ID,
 		Health:    0,
 		HealthMax: 0,
 		Meds:      entities.Meds{},
 		Weapons:   make([]entities.Weapons, 0),
-		Bag:       []entities.Bag{},
-		Gold:      0,
+		Bag:       make([]entities.Bag, 0),
 		Bonus:     make([]entities.PlayerBonus, 0),
 		Debuff:    make([]entities.Debuff, 0),
 		Buff:      make([]entities.Buff, 0),
+		Gold:      0,
 	}
 
-	if err := tx.WithContext(ctx).Create(&player).Error; err != nil {
+	db := r.db
+	if tx != nil {
+		db = tx
+	}
+
+	if err := db.WithContext(ctx).Create(&player).Error; err != nil {
 		return entities.Player{}, err
 	}
 
-	return r.GetByUserId(ctx, tx, userId.String())
+	return player, nil
 }
 
 func (r *playerRepository) Update(
@@ -113,27 +113,12 @@ func (r *playerRepository) Update(
 	tx *gorm.DB,
 	player entities.Player,
 ) (*entities.Player, error) {
-	if tx == nil {
-		tx = r.db
+	db := r.db
+	if tx != nil {
+		db = tx
 	}
-
-	if err := tx.WithContext(ctx).Where("id = ?", player.ID).
-		Select("SectionID", "Health", "HealthMax", "Weapons", "Meds", "Bag", "Gold", "Bonus", "Buff", "Debuff", "ReturnToSection").
-		Updates(entities.Player{
-			SectionID:       player.SectionID,
-			Health:          player.Health,
-			HealthMax:       player.HealthMax,
-			Weapons:         player.Weapons,
-			Meds:            player.Meds,
-			Bag:             player.Bag,
-			Gold:            player.Gold,
-			Bonus:           player.Bonus,
-			Buff:            player.Buff,
-			Debuff:          player.Debuff,
-			ReturnToSection: player.ReturnToSection,
-		}).Error; err != nil {
+	if err := db.WithContext(ctx).Save(&player).Error; err != nil {
 		return nil, err
 	}
-
 	return &player, nil
 }

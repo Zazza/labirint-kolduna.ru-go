@@ -53,6 +53,11 @@ func main() {
 		log.Fatalf("❌ Configuration error: %v", err)
 	}
 
+	// Validate JWT configuration
+	if err := config.ValidateJWTConfig(&cfg.JWT); err != nil {
+		log.Fatalf("❌ JWT configuration error: %v", err)
+	}
+
 	// Setup error logger
 	if err := config.SetupErrorLogger(); err != nil {
 		log.Printf("failed to setup error logger: %v", err)

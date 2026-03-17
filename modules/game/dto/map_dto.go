@@ -18,6 +18,8 @@ type TransitionEdge struct {
 }
 
 type MapResponse struct {
+	Success     bool             `json:"success"`
+	Message     string           `json:"message,omitempty"`
 	Sections    []SectionNode    `json:"sections"`
 	Transitions []TransitionEdge `json:"transitions"`
 }
